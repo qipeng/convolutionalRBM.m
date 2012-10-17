@@ -28,8 +28,8 @@ else
 end
 
 %% initialization
-N = size(data.x, 2);
-K= params.nmap;
+N = size(data.x, 4);
+K = params.nmap;
 m = params.szFilter;
 p = params.szPool;
 n = data.dim;

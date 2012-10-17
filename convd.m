@@ -1,4 +1,4 @@
-function [X] = convd(Z, Y)
+function [X] = convd(Z, Y, useCuda)
 % CONVD  Downward matrix convolution in CRBM
 %   X = CONVD(Z, Y)
 %       Takes Z the nz-by-nz input image, Y the m-by-m convolutional filter,
