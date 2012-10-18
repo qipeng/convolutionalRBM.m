@@ -32,8 +32,8 @@ N = size(data.x, 4);
 K = params.nmap;
 m = params.szFilter;
 p = params.szPool;
-n = data.dim;
-K0 = data.depth;
+n = size(data.x, 1);
+K0 = size(data.x, 3);
 nh = n - m + 1;
 np = floor(nh / p);
 
@@ -120,10 +120,7 @@ for iter = 1:params.iter,
         poshidprobs = poshidprobs ./ K0;
 %         pospoolprobs = pospoolprobs ./ K0;
 
-        %% sample hidden states
-
-%         poshidstates = double(poshidprobs > rand(nh, nh, K, params.szBatch));
-        poshidstates = poshidprobs;
+        
 
         %% negative phase
         
@@ -132,7 +129,7 @@ for iter = 1:params.iter,
         recon = zeros(n, n, K0, params.szBatch);
 
         for d = 1:params.szBatch,
-            hidden = poshidstates(:, :, :, d);
+            hidden = poshidprobs(:, :, :, d);
             for k = 1:K,
                 hiddenk = hidden(:, :, k);
                 for k0 = 1:K0,
