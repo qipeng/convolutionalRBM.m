@@ -18,11 +18,12 @@ rem ********************************************************************
 rem General parameters
 rem ********************************************************************
 
-set MATLAB=%MATLAB%
+set MATLAB=T:\Study\Computation\MATLAB\R2012b
+set MATLAB_BIN=%MATLAB%\bin
 set VS100COMNTOOLS=%VS100COMNTOOLS%
 set VSINSTALLDIR=T:\Develop\Visual Studio 2010 Pro
 set VCINSTALLDIR=%VSINSTALLDIR%\VC
-set PATH=%VCINSTALLDIR%\BIN\;%VCINSTALLDIR%\PlatformSDK\bin;%VSINSTALLDIR%\Common7\IDE;%VSINSTALLDIR%\SDK\v2.0\bin;%VSINSTALLDIR%\Common7\Tools;%VSINSTALLDIR%\Common7\Tools\bin;%VCINSTALLDIR%\VCPackages;%MATLAB_BIN%;%PATH%
+set PATH=%VCINSTALLDIR%\BIN\;%VCINSTALLDIR%\PlatformSDK\bin;%VSINSTALLDIR%\Common7\IDE;%VSINSTALLDIR%\SDK\v2.0\bin;%VSINSTALLDIR%\Common7\Tools;%VSINSTALLDIR%\Common7\Tools\bin;%VCINSTALLDIR%\VCPackages;%MATLAB_BIN%;%CUDA_BIN_PATH%;%PATH%
 set INCLUDE=%VCINSTALLDIR%\ATLMFC\INCLUDE;%VCINSTALLDIR%\INCLUDE;%VCINSTALLDIR%\PlatformSDK\INCLUDE;%VSINSTALLDIR%\SDK\v2.0\include;%CUDA_INC_PATH%;%INCLUDE%
 set LIB=%VCINSTALLDIR%\ATLMFC\LIB;%VCINSTALLDIR%\LIB;%VCINSTALLDIR%\PlatformSDK\lib;%VSINSTALLDIR%\SDK\v2.0\lib;%MATLAB%\extern\lib\win32;C:\Program Files\Microsoft SDKs\Windows\v7.0A\Lib;%CUDA_LIB_PATH%;%LIB%
 set MW_TARGET_ARCH=win32

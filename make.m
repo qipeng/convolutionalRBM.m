@@ -1,3 +1,5 @@
+function make()
+
 while 1,
     c = input('Do you want to setup your mex compiler first? (y / [n], Enter for No) ', 's');
     c = lower(c);
@@ -28,7 +30,11 @@ mxlist = dir('mex/*.cpp');
 
 for i = 1:length(mxlist),
     fprintf('(%d/%d) Compiling mex/%s...\n', i, length(mxlist), mxlist(i).name);
-    eval(sprintf('mex mex/%s', mxlist(i).name));
+    try
+        eval(sprintf('mex mex/%s', mxlist(i).name));
+    catch exp,
+        fprintf('[Error] Error compiling mex/%s, please refer to the error information for solution.\n', mxlist(i).name);
+    end
 end
 
 if compileCuda,
@@ -37,8 +43,14 @@ if compileCuda,
 
     for i = 1:length(mxlist),
         fprintf('(%d/%d) Compiling mex/%s...\n', i, length(mxlist), mxlist(i).name);
-        eval(sprintf('nvmex -f nvmexopts.bat mex/%s', mxlist(i).name));
+        try
+            eval(sprintf('nvmex -f nvmexopts.bat mex/%s', mxlist(i).name));
+        catch exp,
+            fprintf('[Error] Error compiling mex/%s, please refer to the error information for solution.\n', mxlist(i).name);
+        end
     end
 end
 
 fprintf('MEX compilation completed.\n');
+
+end

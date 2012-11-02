@@ -81,7 +81,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     cudaMemcpy(d_aa, bb, sizeof(float)*nh*nh, cudaMemcpyHostToDevice);
     cudaMemcpy(d_bb, d_aa, sizeof(float)*nh*nh, cudaMemcpyDeviceToDevice);
     
-    
     for (i = 0; i < iter; i++) {
         // for (j = 0; j < nh * nh; j++)
             // bb[j] = exp(bb[j]);
@@ -116,7 +115,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     if (nlhs > 1) {
         cudaMemcpy(pvalue, d_pvalue, sizeof(float)*np*np, cudaMemcpyDeviceToHost);
         for (i = 0; i < np * np; i++)
-            poolresp[i] = (double)(1 / pvalue[i]);
+            poolresp[i] = (double)(1 - 1 / pvalue[i]);
     }
     
     cudaFree(d_aa); cudaFree(d_bb); cudaFree(d_pvalue);

@@ -1,14 +1,16 @@
-function [model output] = trainCRBM(data, params)
+function [model output] = trainCRBM(data, params, oldModel)
 % TRAINCRBM  Trains a convolutional restricted Boltzmann machine 
 %   with the specified parameters.
 %
-%   [model output] = TRAINCRBM(data, params)
+%   [model output] = TRAINCRBM(data, params, oldModel)
 %
 %   data should be a structure, containing:
 %       data.x      The input images / pooling states of the previous layer
 %                   of CRBM. This matrix is 4-D, where the first three
 %                   dimensions define an image, and the fourth indexes
 %                   through the images
+%
+%   See Also MEXTRAINCRBM
 %
 %   Written by: Peng Qi, Sep 27, 2012
 %   Version: 0.1 alpha
@@ -39,9 +41,13 @@ np = floor(nh / p);
 
 vmask = convd(ones(nh), ones(m), useCuda);
 
-model.W = 0.1 * randn(m, m, K, K0);
-model.vbias = zeros(1, K0);
-model.hbias = ones(1, K) * (-1);
+if exist('oldModel','var') && ~isempty(oldModel),
+    model = oldModel;
+else
+    model.W = 0.1 * randn(m, m, K, K0);
+    model.vbias = zeros(1, K0);
+    model.hbias = ones(1, K) * (-1);
+end
 
 dW = 0;
 dvbias = 0;
@@ -86,6 +92,8 @@ for iter = 1:params.iter,
 %         negpoolprobs = zeros(np, np, K , params.szBatch);
         neghidprobs = zeros(nh, nh, K, params.szBatch);
         
+        
+        
         %% positive phase
 
         %% mean field hidden update
@@ -105,6 +113,7 @@ for iter = 1:params.iter,
                         pprobs(:,:,k) = pprobs(:,:,k) + pprob;
                     else
                         hprob = meanFieldInference(hres + model.hbias(k), p, params.mfIter);
+                        if (any(any(any(isnan(hprob))))), save nanInput hres model p params; error('hprob NaN'); end
                     end
                     
                     poshidprobs(:, :, k, d) = poshidprobs(:, :, k, d)...
@@ -119,8 +128,6 @@ for iter = 1:params.iter,
 
         poshidprobs = poshidprobs ./ K0;
 %         pospoolprobs = pospoolprobs ./ K0;
-
-        
 
         %% negative phase
         
@@ -198,9 +205,9 @@ for iter = 1:params.iter,
         
         model.vbias = model.vbias + params.epsvbias * dvbias;
         if params.sparseness <= 0,
-            model.hbias = model.hbias + params.epshbias * dhbias;
+            model.hbias = model.hbias + params.epshbias * dhbias; 
         end
-        model.W = model.W + params.epsW * dW;
+        model.W = model.W + params.epsW * (dW  - params.decayw * model.W);
     end
     
     if params.sparseness > 0,
