@@ -1,10 +1,10 @@
-function [X] = convd(Z, Y, useCuda)
-% CONVD  Downward matrix convolution in CRBM
-%   X = CONVD(Z, Y)
+function [X] = conve(Z, Y, useCuda)
+% CONVE  Expanding matrix convolution in CRBM
+%   X = CONVE(Z, Y)
 %       Takes Z the nz-by-nz input image, Y the m-by-m convolutional filter,
 %       returns the convolution result X, which is (nz+m-1)-by-(nz+m+1)
 %
-%       See also CONVU
+%       See also CONVS
 %
 %   Written by: Peng Qi, Sep 27, 2012
 
@@ -31,5 +31,5 @@ end
 if ~isempty(useCuda) && useCuda,
     X = convd_cuda(Z, Y);
 else
-    X = convdmex(Z, Y);
+    X = convemex(Z, Y);
 end

@@ -1,10 +1,10 @@
-function Z = convu(X, Y, useCuda)
-% CONVU  Upward matrix convolution in CRBM
-%   Z = CONVU(X, Y)
+function Z = convs(X, Y, useCuda, separate)
+% CONVS  Shrinking matrix convolution in CRBM
+%   Z = CONVS(X, Y)
 %       Takes X the n-by-n input image, Y the m-by-m convolutional filter,
 %       returns the convolution result Z, which is (n-m+1)-by-(n-m+1)
 %
-%       See also CONVD
+%       See also CONVE
 %
 %   Written by: Peng Qi, Sep 27, 2012
 
@@ -23,6 +23,10 @@ if ~exist('useCuda', 'var') || isempty(useCuda),
     useCuda = 0;
 end
 
+if ~exist('separate', 'var') || isempty(separate),
+    separate = 0;
+end
+
 % nz = n-m+1;
 % Z = zeros(nz);
 % 
@@ -33,7 +37,7 @@ end
 % end
 
 if ~isempty(useCuda) && useCuda,
-    Z = convu_cuda(X, Y);
+    Z = convs_cuda(X, Y, separate);
 else
-    Z = convumex(X, Y);
+    Z = convsmex(X, Y, separate);
 end

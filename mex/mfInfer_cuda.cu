@@ -18,17 +18,17 @@ __global__ void mf(float *aa, float*bb, float* pvalue, int p, int np, int nh, bo
         j = idx / np; k = idx % np;
         pvalue[idx] = 1;
                 
-        for (jj = 0; jj < p; jj++)
-            for (kk = 0; kk < p; kk++)
-                pvalue[idx] += bb[(j * p + jj) * nh + k * p + kk];
+        for (jj = 0; jj < p*p; jj++)
+            //for (kk = 0; kk < p; kk++)
+                pvalue[idx] += bb[(j * p + jj/p) * nh + k * p + jj%p];
                 
-        for (jj = 0; jj < p; jj++)
-            for (kk = 0; kk < p; kk++) {
-                idx2 = (j * p + jj) * nh + k * p + kk;
+        for (jj = 0; jj < p*p; jj++)
+            //for (kk = 0; kk < p; kk++) 
+            {
+                idx2 = (j * p + jj/p) * nh + k * p + jj%p;
                 bb[idx2] /= pvalue[idx];
                 if (notLast) {
                     bb[idx2] += aa[idx2];
-                    bb[idx2] /= 2;
                 }
             }
     }

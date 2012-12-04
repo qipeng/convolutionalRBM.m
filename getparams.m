@@ -9,8 +9,6 @@ function params = getparams()
 params.nmap = 20;
 params.szFilter = 5;
 params.szPool = 3;
-% params.stpFilter = 1;
-% params.stpPool = 1;
 
 %% Learining parameters
 params.epshbias = 1e-1;
@@ -19,7 +17,7 @@ params.epsW = 1e-2;
 params.phbias = 0.5;
 params.pvbias = 0.5;
 params.pW = 0.5;
-params.decayw = 10;
+params.decayw = 1;
 params.szBatch = 10;
 params.sparseness = .01;
 

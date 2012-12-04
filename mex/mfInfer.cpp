@@ -49,8 +49,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 for (jj = 0; jj < p; jj++)
                     for (kk = 0; kk < p; kk++)
                         pvalue[idx] += bb[(j * p + jj) * nh + k * p + kk];
-                
-                if (pvalue[idx] == 0) printf("pvalue[%d] is zero!\n", idx);
                         
                 for (jj = 0; jj < p; jj++)
                     for (kk = 0; kk < p; kk++) {
@@ -58,7 +56,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                         bb[idx2] /= pvalue[idx];
                         if (i < iter - 1) {
                             bb[idx2] += aa[idx2];
-                            bb[idx2] /= 2;
                         }
                     }
             }
