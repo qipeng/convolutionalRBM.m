@@ -10,6 +10,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     const mwSize *dimsa;
     double *aa, *bb, *cc, *resp, *pvalue, *poolresp;
     int p, np, nh, iter, i, j, jj, k, kk, idx, idx2;
+    double max;
 
 
     a = prhs[0];
@@ -38,17 +39,24 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     memcpy(bb, aa, sizeof(double) * nh * nh);
     
     for (i = 0; i < iter; i++) {
-        for (j = 0; j < nh * nh; j++)
-            bb[j] = exp(bb[j]);
-            
         for (j = 0; j < np; j++)
             for (k = 0; k < np; k++) {
                 idx = j * np + k;
-                pvalue[idx] = 1;
+                
+                max = -1e10;
                 
                 for (jj = 0; jj < p; jj++)
                     for (kk = 0; kk < p; kk++)
+                        if (bb[(j * p + jj) * nh + k * p + kk] > max)
+                            max = bb[(j * p + jj) * nh + k * p + kk];
+                
+                pvalue[idx] = exp(-max);
+                
+                for (jj = 0; jj < p; jj++)
+                    for (kk = 0; kk < p; kk++) {
+                        bb[(j * p + jj) * nh + k * p + kk] = exp(bb[(j * p + jj) * nh + k * p + kk] - max);
                         pvalue[idx] += bb[(j * p + jj) * nh + k * p + kk];
+                    }
                         
                 for (jj = 0; jj < p; jj++)
                     for (kk = 0; kk < p; kk++) {
@@ -58,6 +66,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                             bb[idx2] += aa[idx2];
                         }
                     }
+                
+                pvalue[idx] = pvalue[idx] * exp(max);
             }
     }
     

@@ -1,27 +1,39 @@
-function make()
+function make(option)
 
-while 1,
-    c = input('Do you want to setup your mex compiler first? (y / [n], Enter for No) ', 's');
-    c = lower(c);
-    if isempty(c) || c(1) == 'n',
-        break;
-    elseif c(1) == 'y',
-        mex -setup
-        break;
+if ~exist('option','var') || isempty(option),
+    option = 0;
+end
+
+if option >= 1,
+    mex -setup
+elseif option >= 0,
+    while 1,
+        c = input('Do you want to setup your mex compiler first? (y / [n], Enter for No) ', 's');
+        c = lower(c);
+        if isempty(c) || c(1) == 'n',
+            break;
+        elseif c(1) == 'y',
+            mex -setup
+            break;
+        end
     end
 end
 
 compileCuda = 0;
 
-while 1,
-    c = input('Do you want to compile the CUDA-MEX files? (y / [n], Enter for No) ', 's');
-    c = lower(c);
-    if isempty(c) || c(1) == 'n',
-        compileCuda = 0;
-        break;
-    elseif c(1) == 'y',
-        compileCuda = 1;
-        break;
+if option >= 2,
+    compileCuda = 1;
+elseif option >= 0,
+    while 1,
+        c = input('Do you want to compile the CUDA-MEX files? (y / [n], Enter for No) ', 's');
+        c = lower(c);
+        if isempty(c) || c(1) == 'n',
+            compileCuda = 0;
+            break;
+        elseif c(1) == 'y',
+            compileCuda = 1;
+            break;
+        end
     end
 end
 

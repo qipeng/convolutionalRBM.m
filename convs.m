@@ -38,6 +38,9 @@ end
 
 if ~isempty(useCuda) && useCuda,
     Z = convs_cuda(X, Y, separate);
+    if ~separate,
+        Z = sum(sum(Z,4),3);
+    end
 else
     Z = convsmex(X, Y, separate);
 end

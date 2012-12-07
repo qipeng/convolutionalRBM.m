@@ -29,7 +29,7 @@ end
 % end
 
 if ~isempty(useCuda) && useCuda,
-    X = convd_cuda(Z, Y);
+    X = sum(conve_cuda(Z, Y),3);
 else
     X = convemex(Z, Y);
 end

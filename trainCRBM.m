@@ -48,7 +48,7 @@ output_enabled = nargout > 1;
 hinit = 0;
 
 if params.sparseness > 0,
-    hinit = 0;
+    hinit = -1;
 end
 
 if exist('oldModel','var') && ~isempty(oldModel),
@@ -342,6 +342,6 @@ for iter = 1:param_iter,
         end
     end
     
-    for i = 1:20,subplot(4,5,i);imagesc(model.W(:,:,i));axis image off;end;colormap gray;drawnow;pause(0.1);
+    for i = 1:10,subplot(2,5,i);imagesc(model.W(:,:,i));axis image off;end;colormap gray;drawnow;pause(0.1);
 end
 end
