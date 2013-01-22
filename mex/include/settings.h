@@ -1,0 +1,3 @@
+#define DEVICE 0
+#define BLOCKSIZE 256
+#define MAXBLOCKD3 32

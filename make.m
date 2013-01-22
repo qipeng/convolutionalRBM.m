@@ -1,12 +1,12 @@
 function make(option)
 
 if ~exist('option','var') || isempty(option),
-    option = 0;
+    option = -1;
 end
 
-if option >= 1,
+if bitand(option, 1),
     mex -setup
-elseif option >= 0,
+elseif option < 0,
     while 1,
         c = input('Do you want to setup your mex compiler first? (y / [n], Enter for No) ', 's');
         c = lower(c);
@@ -21,9 +21,9 @@ end
 
 compileCuda = 0;
 
-if option >= 2,
+if bitand(option,2),
     compileCuda = 1;
-elseif option >= 0,
+elseif option < 0,
     while 1,
         c = input('Do you want to compile the CUDA-MEX files? (y / [n], Enter for No) ', 's');
         c = lower(c);
@@ -38,7 +38,7 @@ elseif option >= 0,
 end
 
 fprintf('Compiling CPU-MEX files...\n');
-mxlist = dir('mex/*.cpp');
+mxlist = dir('mex/*.c');
 
 for i = 1:length(mxlist),
     fprintf('(%d/%d) Compiling mex/%s...\n', i, length(mxlist), mxlist(i).name);
@@ -56,7 +56,7 @@ if compileCuda,
     for i = 1:length(mxlist),
         fprintf('(%d/%d) Compiling mex/%s...\n', i, length(mxlist), mxlist(i).name);
         try
-            eval(sprintf('nvmex -f nvmexopts.bat mex/%s', mxlist(i).name));
+            cudamex(sprintf('mex/%s', mxlist(i).name));
         catch exp,
             fprintf('[Error] Error compiling mex/%s, please refer to the error information for solution.\n', mxlist(i).name);
         end

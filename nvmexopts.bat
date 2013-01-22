@@ -18,14 +18,15 @@ rem ********************************************************************
 rem General parameters
 rem ********************************************************************
 
-set MATLAB=T:\Study\Computation\MATLAB\R2012b
+set MATLAB=T:\Study\Computation\MATLAB
 set MATLAB_BIN=%MATLAB%\bin
+set CUDA_PATH=C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v5.0
 set VS100COMNTOOLS=%VS100COMNTOOLS%
-set VSINSTALLDIR=T:\Develop\Visual Studio 2010 Pro
+set VSINSTALLDIR=T:\Develop\Visual Studio 2010
 set VCINSTALLDIR=%VSINSTALLDIR%\VC
-set PATH=%VCINSTALLDIR%\BIN\;%VCINSTALLDIR%\PlatformSDK\bin;%VSINSTALLDIR%\Common7\IDE;%VSINSTALLDIR%\SDK\v2.0\bin;%VSINSTALLDIR%\Common7\Tools;%VSINSTALLDIR%\Common7\Tools\bin;%VCINSTALLDIR%\VCPackages;%MATLAB_BIN%;%CUDA_BIN_PATH%;%PATH%
-set INCLUDE=%VCINSTALLDIR%\ATLMFC\INCLUDE;%VCINSTALLDIR%\INCLUDE;%VCINSTALLDIR%\PlatformSDK\INCLUDE;%VSINSTALLDIR%\SDK\v2.0\include;%CUDA_INC_PATH%;%INCLUDE%
-set LIB=%VCINSTALLDIR%\ATLMFC\LIB;%VCINSTALLDIR%\LIB;%VCINSTALLDIR%\PlatformSDK\lib;%VSINSTALLDIR%\SDK\v2.0\lib;%MATLAB%\extern\lib\win32;C:\Program Files\Microsoft SDKs\Windows\v7.0A\Lib;%CUDA_LIB_PATH%;%LIB%
+set PATH=%VCINSTALLDIR%\BIN\;%VCINSTALLDIR%\PlatformSDK\bin;%VSINSTALLDIR%\Common7\IDE;%VSINSTALLDIR%\SDK\v2.0\bin;%VSINSTALLDIR%\Common7\Tools;%VSINSTALLDIR%\Common7\Tools\bin;%VCINSTALLDIR%\VCPackages;%MATLAB_BIN%;%CUDA_PATH%\bin;%PATH%
+set INCLUDE=%VCINSTALLDIR%\ATLMFC\INCLUDE;%VCINSTALLDIR%\INCLUDE;%VCINSTALLDIR%\PlatformSDK\INCLUDE;%VSINSTALLDIR%\SDK\v2.0\include;%CUDA_PATH%\include;%INCLUDE%
+set LIB=%VCINSTALLDIR%\ATLMFC\LIB;%VCINSTALLDIR%\LIB;%VCINSTALLDIR%\PlatformSDK\lib;%VSINSTALLDIR%\SDK\v2.0\lib;%MATLAB%\extern\lib\win32;C:\Program Files\Microsoft SDKs\Windows\v7.0A\Lib;%CUDA_PATH%\lib\Win32;%LIB%
 set MW_TARGET_ARCH=win32
 
 rem ********************************************************************
@@ -44,7 +45,7 @@ rem Linker parameters
 rem ********************************************************************
 set LIBLOC=%MATLAB%\extern\lib\win32\microsoft
 set LINKER=link
-set LINKFLAGS=/dll /export:%ENTRYPOINT% /MAP /LIBPATH:"%LIBLOC%" libmx.lib libmex.lib libmat.lib /implib:%LIB_NAME%.x /MACHINE:X86 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib cuda.lib cudart.lib
+set LINKFLAGS=/dll /export:%ENTRYPOINT% /MAP /LIBPATH:"%LIBLOC%" libmx.lib libmex.lib libmat.lib /implib:%LIB_NAME%.x /MACHINE:X86 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib cuda.lib cudart.lib curand.lib
 set LINKOPTIMFLAGS=
 set LINKDEBUGFLAGS=/DEBUG /PDB:"%OUTDIR%%MEX_NAME%%MEX_EXT%.pdb"
 set LINK_FILE=
