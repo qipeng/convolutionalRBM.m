@@ -188,7 +188,7 @@ for iter = model.iter+1:param_iter,
         %% mean field hidden update
         
         neghidacts = reshape(sum(convs(recon, model_W, useCuda),2), [param_szBatch K nh nh]);
-        neghidprobs = mfInfer5(neghidacts, model_hbias, p);
+        neghidprobs = poolHidden(neghidacts, model_hbias, p, useCuda);
             
         if (params.verbose > 1),
             fprintf('.');
