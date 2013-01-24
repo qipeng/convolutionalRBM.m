@@ -4,9 +4,7 @@ if ~exist('option','var') || isempty(option),
     option = -1;
 end
 
-if bitand(option, 1),
-    mex -setup
-elseif option < 0,
+if option < 0,
     while 1,
         c = input('Do you want to setup your mex compiler first? (y / [n], Enter for No) ', 's');
         c = lower(c);
@@ -17,13 +15,13 @@ elseif option < 0,
             break;
         end
     end
+elseif bitand(option, 1),
+    mex -setup
 end
 
 compileCuda = 0;
 
-if bitand(option,2),
-    compileCuda = 1;
-elseif option < 0,
+if option < 0,
     while 1,
         c = input('Do you want to compile the CUDA-MEX files? (y / [n], Enter for No) ', 's');
         c = lower(c);
@@ -35,6 +33,8 @@ elseif option < 0,
             break;
         end
     end
+elseif bitand(option,2),
+    compileCuda = 1;
 end
 
 fprintf('Compiling CPU-MEX files...\n');
