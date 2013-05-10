@@ -14,8 +14,6 @@ For general information on functions in this project, try `help function_name`, 
 ## Some questions raised in recent comments
 I'm sincerely sorry if I did not respond in a timely manner on GitHub. In this case, the most efficient way to reach me is via [Email](mailto:qipeng.thu@gmail.com?subject=[CRBM%20Issue]) (Please begin your email subject with "[CRBM Issue]", which should have automatically added if you follow this link). 
 
-Otherwise if you would like to share your questions with others for discussion, try using the Issue feature of GitHub --- I cannot reply to comments.
-
 Here's some questions from recent comments
 
 * **How do I get the data and parameters for `trainCRBM?`**
