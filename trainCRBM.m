@@ -49,7 +49,7 @@ output_enabled = nargout > 1;
 hinit = 0;
 
 if params.sparseness > 0,
-    hinit = 0;
+    hinit = -1;
 end
 
 if exist('oldModel','var') && ~isempty(oldModel),
@@ -73,7 +73,7 @@ else
     model.vbias = zeros(1, K0);
     model.hbias = ones(1, K) * hinit;
     if (params.sparseness > 0)
-        model.sigma = 0.4;
+        model.sigma = 0.05;
     else
         model.sigma = 1;    
     end
@@ -159,10 +159,10 @@ for iter = model.iter+1:param_iter,
         
         poshidacts = reshape(sum(convs(recon, model_W, useCuda),2), [param_szBatch K nh nh]);
 
+        [poshidprobs, pospoolprobs, poshidstates] = poolHidden(poshidacts, model_hbias, p, useCuda);
+        
         if output_enabled && ~rem(iter, params.saveInterv),
-            [poshidprobs, output_x, poshidstates] = poolHidden(poshidacts, model_hbias, p, useCuda);
-        else
-            [poshidprobs, ~, poshidstates] = poolHidden(poshidacts, model_hbias, p, useCuda);
+            output_x = pospoolprobs;
         end
         
         if output_enabled && ~rem(iter, params.saveInterv),
@@ -203,7 +203,8 @@ for iter = model.iter+1:param_iter,
         %% contrast divergence update on params
         
         if (params.sparseness > 0),
-            hidact = hidact + reshape(sum(sum(sum(sigmoid(bsxfun(@plus, poshidacts, model_hbias)), 4), 3), 1), [1 K]);
+%             hidact = hidact + reshape(sum(sum(sum(sigmoid(bsxfun(@plus, poshidacts, model_hbias)), 4), 3), 1), [1 K]);
+            hidact = hidact + reshape(sum(sum(sum(pospoolprobs, 4), 3), 1), [1 K]);
         else
             dhbias = phbias * dhbias + ...
                 reshape((sum(sum(sum(poshidprobs, 4), 3), 1) - sum(sum(sum(neghidprobs, 4), 3), 1))...
@@ -223,11 +224,11 @@ for iter = model.iter+1:param_iter,
         end
         model.W = model.W + params.epsW * (dW  - params.decayw * model.W);
         
-        save dbgInfo model poshidacts poshidprobs poshidstates recon neghidacts neghidprobs model_W
-        if any(isnan(model.W(:))) || any(isnan(poshidacts(:))) || any(isnan(poshidprobs(:))) || any(isnan(poshidstates(:))) ...
-                || any(isnan(recon(:))) || any(isnan(neghidacts(:))) || any(isnan(neghidprobs(:))),
-            return;
-        end
+%         save dbgInfo model poshidacts poshidprobs poshidstates recon neghidacts neghidprobs model_W
+%         if any(isnan(model.W(:))) || any(isnan(poshidacts(:))) || any(isnan(poshidprobs(:))) || any(isnan(poshidstates(:))) ...
+%                 || any(isnan(recon(:))) || any(isnan(neghidacts(:))) || any(isnan(neghidprobs(:))),
+%             return;
+%         end
         if method == 2,
             phantom(batch_idx((batch - 1) * param_szBatch + 1 : ...
                 batch * param_szBatch),:,:,:) = reshape(sum(conve(neghidprobs, model_W, useCuda), 3), [param_szBatch K0 n n]);
@@ -235,7 +236,7 @@ for iter = model.iter+1:param_iter,
     end
     
     if params.sparseness > 0,
-        hidact = hidact / nh / nh / N;
+        hidact = hidact / np / np / N;
         hidq = hidq * lambdaq + hidact * (1 - lambdaq);
         dhbias = phbias * dhbias + ((params.sparseness) - (hidq));
         model.hbias = model.hbias + params.epshbias * dhbias;
@@ -248,9 +249,9 @@ for iter = model.iter+1:param_iter,
             end
             fprintf('\n\tsparseness: %f\thidbias: %f\n', sum(hidact) / K, sum(model.hbias) / K);
         end
-        if (model.sigma > 0.05),
-            model.sigma = model.sigma * 0.99;
-        end
+%         if (model.sigma > 0.05),
+%             model.sigma = model.sigma * 0.99;
+%         end
     end
     
     if ~rem(iter, params.saveInterv),
@@ -275,6 +276,6 @@ for iter = model.iter+1:param_iter,
     end
     
 %     for i = 1:20,subplot(4,5,i);imagesc(reshape(whiten_data(model.W(1,i,:,:), uwhM),m,m));axis image off;end;colormap gray;drawnow;pause(0.1);
-    for i = 1:20,subplot(4,5,i);imagesc(reshape(model.W(1,i,:,:),m,m));axis image off;end;colormap gray;drawnow;pause(0.1);
+    for i = 1:16,subplot(4,4,i);imagesc(reshape(model.W(1,i,:,:),m,m));axis image off;end;colormap gray;drawnow;pause(0.1);
 end
 end
