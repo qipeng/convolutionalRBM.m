@@ -6,8 +6,12 @@ A MATLAB / MEX / CUDA-MEX implementation of Convolutional Restricted Boltzmann M
 ## General Information
 Please refer to the [project introduction page on my website](http://qipeng.me/software/convolutional-rbm.html).
 
-## Current status (updated: May 10, 2013)
-Apparently this project has been dormant for the past a few months, and it will remain dormant for a few months to come, since my timetable is quite full recently. I might probably come back to this project during *June to August*, but I cannot say that for sure.
+## Current status (updated: Jul 22, 2013)
+The development of this project is back **active**. The data structures and interfaces are subject to change, and the documentation in the `.m` files will be updated when the code is ready.
+
+Specifically, I'm currently working on implementing faster convolution for the model, hopefully accommodating a common-style data structure (rather than that of the current version, which is weird).
+
+Besides, I'll look into the CUDA compilation part of the project, and try to make it as cross-platform as possible (possibly maintaining it as a separate project on GitHub).
 
 For general information on functions in this project, try `help function_name`, as most `.m` files in this project are self-documented.
 
