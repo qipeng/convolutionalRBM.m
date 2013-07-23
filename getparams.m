@@ -6,8 +6,8 @@ function params = getparams(method)
 %   Written by: Peng Qi, Sep 27, 2012
 
 %% Model parameters
-params.nmap = 20;
-params.szFilter = 10;
+params.nmap = 16;
+params.szFilter = 8;
 params.szPool = 2;
 params.method = 'CD';
 
@@ -18,15 +18,15 @@ if (nargin > 0)
 end
 
 %% Learining parameters
-params.epshbias = 1e-1;
-params.epsvbias = 1e-1;
-params.epsW = 1e-2;
+params.epshbias = 5e-1;
+params.epsvbias = 5e-1;
+params.epsW = 1e-1;
 params.phbias = 0.5;
 params.pvbias = 0.5;
 params.pW = 0.5;
 params.decayw = .01;
 params.szBatch = 10;
-params.sparseness = .01;
+params.sparseness = .02;
 params.whitenData = 1;
 
 %% Running parameters

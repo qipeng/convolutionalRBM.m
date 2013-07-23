@@ -9,7 +9,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     const mwSize *dimsa, *dimsb;
     mwSize *dimsc;
     double *aa, *bb, *cc;
-    int n, m, i, j, ii, jj, ni, nz, ndima, ndimb, k, k0, K, K0, N;
+    int H, W, i, j, ii, jj, ni, ndima, ndimb, colors, color, Nfilters, nf, N, Wfilter, Wres, Hres;
 
     a = prhs[0];
     b = prhs[1];
@@ -20,32 +20,39 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     ndima = mxGetNumberOfDimensions(a);
     ndimb = mxGetNumberOfDimensions(b);
     
-    N = dimsa[0]; K0 = dimsa[1]; K = dimsb[1];
+    H = dimsa[0]; W = dimsa[1];
+    if (ndima <= 2) colors = 1;
+    else colors = dimsa[2];
+    if (ndima <= 3) N = 1;
+    else N = dimsa[3];
     
-    if (ndima <= 2) 
-        n = 1;
-    else
-        n = dimsa[2];
-    if (ndimb <= 2)
-        m = 1;
-    else
-        m = dimsb[2];
-    nz = n - m + 1;
-    dimsc = (mwSize*)mxMalloc(sizeof(mwSize)*5);
-    dimsc[0] = N; dimsc[1] = K0; dimsc[2] = K; dimsc[3] = nz; dimsc[4] = nz;
-    c = plhs[0] = mxCreateNumericArray(5, dimsc, mxDOUBLE_CLASS, mxREAL);
+    Wfilter = dimsb[0];
+    if (ndimb <= 3) Nfilters = 1;
+    else Nfilters = dimsb[3];
+    
+    Wres = W - Wfilter + 1;
+    Hres = H - Wfilter + 1;
+   
+    dimsc = (mwSize*)mxMalloc(sizeof(mwSize)*4);
+    dimsc[0] = Hres; dimsc[1] = Wres; dimsc[2] = Nfilters; dimsc[3] = N;
+    c = plhs[0] = mxCreateNumericArray(4, dimsc, mxDOUBLE_CLASS, mxREAL);
     mxFree(dimsc);
     
     aa = mxGetPr(a);
     bb = mxGetPr(b);
     cc = mxGetPr(c);
     
-    for (i = 0; i < nz; i++)
-        for (j = 0; j < nz; j++)
-            for (ii = 0; ii < m; ii++)
-                for (jj = 0; jj < m; jj++)
-                    for (k = 0; k < K; k++) 
-                        for (k0 = 0; k0 < K0; k0++)
-                            for (ni = 0; ni < N; ni++)
-                                cc[ni + N * k0 + N * K0 * k + N * K0 * K * (i * nz + j)] += aa[ni + N * k0 + N * K0 * ((i + ii) * n + j + jj )] * bb[k0 + K0 * k + K0 * K * (ii * m + jj)];
+    for (ni = 0; ni < N; ni++)
+        for (nf = 0; nf < Nfilters; nf++)
+            for (j = 0; j < Wres; j++)
+                for (i = 0; i < Hres; i++) {
+                    int idxRes = i + Hres * j + Wres * Hres * nf + Nfilters * Wres * Hres * ni;
+                    cc[idxRes] = 0;
+                
+                    for (color = 0; color < colors; color++)
+                        for (jj = 0; jj < Wfilter; jj++)
+                            for (ii = 0; ii < Wfilter; ii++)
+                                cc[idxRes] += aa[(i+ii) + H * (j+jj) + W * H * color + colors * W * H * ni]
+                                    * bb[ii + Wfilter * jj + Wfilter * Wfilter * color + colors * Wfilter * Wfilter * nf];
+                }
 }
