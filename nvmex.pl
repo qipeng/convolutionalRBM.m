@@ -154,7 +154,8 @@ so the correct version of perl could not be found";
     $main::cmd_name = Win32::GetShortPathName($main::cmd_name);
 
     (my $unused, $main::script_directory) = fileparse($main::cmd_name);
-    ($main::matlabroot = $main::cmd_name) =~ s%\\bin\\mex.pl$%%;
+    #($main::matlabroot = $main::cmd_name) =~ s%\\bin\\mex.pl$%%;
+    ($main::matlabroot = $main::cmd_name) =~ s%\\bin\\nvmex.pl$%%;
 
     $main::cmd_name = uc($main::cmd_name);
 

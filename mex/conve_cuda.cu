@@ -1,9 +1,11 @@
-#include <math.h>
+//#include <math.h>
 #include <matrix.h>
 #include <mex.h>
 
 #include "include/utils.cuh"
 #include "include/settings.h"
+
+#include "cutil.h"
 
 __global__ void convolve(float *a, float *b, float *c, int N, int K0, int K, int n, int m, int nz, int gridOffset) {
     int i = blockIdx.y, j = blockIdx.x, ni = gridOffset + threadIdx.z, k0 = threadIdx.x, k = threadIdx.y, ii, jj;

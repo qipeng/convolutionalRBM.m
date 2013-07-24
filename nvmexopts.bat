@@ -19,15 +19,13 @@ rem General parameters
 rem ********************************************************************
 
 set MATLAB=T:\Study\Computation\MATLAB
-set MATLAB_BIN=%MATLAB%\bin
-set CUDA_PATH=C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v5.0
-set VS100COMNTOOLS=%VS100COMNTOOLS%
-set VSINSTALLDIR=T:\Develop\Visual Studio 2010
+set VS80COMNTOOLS=%VS80COMNTOOLS%
+set VSINSTALLDIR=T:\Develop\IDE\Visual Studio 2010
 set VCINSTALLDIR=%VSINSTALLDIR%\VC
-set PATH=%VCINSTALLDIR%\BIN\;%VCINSTALLDIR%\PlatformSDK\bin;%VSINSTALLDIR%\Common7\IDE;%VSINSTALLDIR%\SDK\v2.0\bin;%VSINSTALLDIR%\Common7\Tools;%VSINSTALLDIR%\Common7\Tools\bin;%VCINSTALLDIR%\VCPackages;%MATLAB_BIN%;%CUDA_PATH%\bin;%PATH%
-set INCLUDE=%VCINSTALLDIR%\ATLMFC\INCLUDE;%VCINSTALLDIR%\INCLUDE;%VCINSTALLDIR%\PlatformSDK\INCLUDE;%VSINSTALLDIR%\SDK\v2.0\include;%CUDA_PATH%\include;%INCLUDE%
-set LIB=%VCINSTALLDIR%\ATLMFC\LIB;%VCINSTALLDIR%\LIB;%VCINSTALLDIR%\PlatformSDK\lib;%VSINSTALLDIR%\SDK\v2.0\lib;%MATLAB%\extern\lib\win32;C:\Program Files\Microsoft SDKs\Windows\v7.0A\Lib;%CUDA_PATH%\lib\Win32;%LIB%
-set MW_TARGET_ARCH=win32
+set PATH=%VCINSTALLDIR%\BIN\;%VCINSTALLDIR%\PlatformSDK\bin;%VSINSTALLDIR%\Common7\IDE;%VSINSTALLDIR%\SDK\v2.0\bin;%VSINSTALLDIR%\Common7\Tools;%VSINSTALLDIR%\Common7\Tools\bin;%VCINSTALLDIR%\VCPackages;%MATLAB_BIN%;C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\Bin;%PATH%
+set INCLUDE=%VCINSTALLDIR%\ATLMFC\INCLUDE;%VCINSTALLDIR%\INCLUDE;%VCINSTALLDIR%\PlatformSDK\INCLUDE;%VSINSTALLDIR%\SDK\v2.0\include;%MATLAB%\extern\include;%NVSDKDIR%\C\common\inc;%CUDA_INC_PATH%;%INCLUDE%
+set LIB=C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\Lib\x64\;%VCINSTALLDIR%\ATLMFC\LIB;%VCINSTALLDIR%\LIB\amd64;%VCINSTALLDIR%\PlatformSDK\lib;%VSINSTALLDIR%\SDK\v2.0\lib;%MATLAB%\extern\lib\win64;%NVSDKDIR%\C\common\lib\x64;%CUDA_LIB_PATH%;%LIB%
+set MW_TARGET_ARCH=win64
 
 rem ********************************************************************
 rem Compiler parameters
@@ -43,9 +41,9 @@ rem set NAME_OBJECT=/Fo
 rem ********************************************************************
 rem Linker parameters
 rem ********************************************************************
-set LIBLOC=%MATLAB%\extern\lib\win32\microsoft
+set LIBLOC=%MATLAB%\extern\lib\win64\microsoft
 set LINKER=link
-set LINKFLAGS=/dll /export:%ENTRYPOINT% /MAP /LIBPATH:"%LIBLOC%" libmx.lib libmex.lib libmat.lib /implib:%LIB_NAME%.x /MACHINE:X86 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib cuda.lib cudart.lib curand.lib
+set LINKFLAGS=/dll /export:%ENTRYPOINT% /MAP /LIBPATH:"%LIBLOC%" libmx.lib libmex.lib libmat.lib /implib:%LIB_NAME%.x /MACHINE:X64 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib msvcrt.lib cudart.lib curand.lib
 set LINKOPTIMFLAGS=
 set LINKDEBUGFLAGS=/DEBUG /PDB:"%OUTDIR%%MEX_NAME%%MEX_EXT%.pdb"
 set LINK_FILE=
@@ -61,5 +59,5 @@ set RC_LINKER=
 
 set POSTLINK_CMDS=del "%OUTDIR%%MEX_NAME%.map"
 set POSTLINK_CMDS1=del %LIB_NAME%.x
-rem set POSTLINK_CMDS2=mt -outputresource:"%OUTDIR%%MEX_NAME%%MEX_EXT%";2 -manifest "%OUTDIR%%MEX_NAME%%MEX_EXT%.manifest"
-rem set POSTLINK_CMDS3=del "%OUTDIR%%MEX_NAME%%MEX_EXT%.manifest" 
+set POSTLINK_CMDS2=mt -outputresource:"%OUTDIR%%MEX_NAME%%MEX_EXT%";2 -manifest "%OUTDIR%%MEX_NAME%%MEX_EXT%.manifest"
+set POSTLINK_CMDS3=del "%OUTDIR%%MEX_NAME%%MEX_EXT%.manifest" 

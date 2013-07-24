@@ -56,7 +56,7 @@ if compileCuda,
     for i = 1:length(mxlist),
         fprintf('(%d/%d) Compiling mex/%s...\n', i, length(mxlist), mxlist(i).name);
         try
-            cudamex(sprintf('mex/%s', mxlist(i).name));
+            nvmex(sprintf('mex/%s', mxlist(i).name), '-f', 'nvmexopts.bat');
         catch exp,
             fprintf('[Error] Error compiling mex/%s, please refer to the error information for solution.\n', mxlist(i).name);
         end
