@@ -18,9 +18,9 @@ if (nargin > 0)
 end
 
 %% Learining parameters
-params.epshbias = 5e-1;
-params.epsvbias = 5e-1;
-params.epsW = 1e-1;
+params.epshbias = 1e-1;
+params.epsvbias = 1e-1;
+params.epsW = 1e-2;
 params.phbias = 0.5;
 params.pvbias = 0.5;
 params.pW = 0.5;

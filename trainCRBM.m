@@ -203,9 +203,9 @@ for iter = model.iter+1:param_iter,
             errsum = errsum + sum(err(:).^2);
             if (params.verbose > 4),
                 figure(1);
-                for i = 1:16,subplot(4,4,i);imagesc(model.W(:,:,:,i));axis image off;end;colormap gray;drawnow;
-                figure(2);imagesc(batchdata(:,:,:,1));colormap gray;
-                figure(3);imagesc(recon(:,:,:,1));colormap gray;
+                for i = 1:16,subplot(4,8,i+16);imagesc(model.W(:,:,:,i));axis image off;end;colormap gray;drawnow;
+                subplot(2,2,1);imagesc(batchdata(:,:,1));colormap gray;axis off;title('data');
+                subplot(2,2,2);imagesc(recon(:,:,1));colormap gray;axis off;title('reconstruction');
                 drawnow;
             end
         end
@@ -250,7 +250,7 @@ for iter = model.iter+1:param_iter,
     end
     
     if params.sparseness > 0,
-        hidact = hidact / Hpool / Wpool / N;
+        hidact = hidact / Hhidden / Whidden / N;
         hidq = hidq * lambdaq + hidact * (1 - lambdaq);
         dhbias = phbias * dhbias + ((params.sparseness) - (hidq));
         model.hbias = model.hbias + params.epshbias * dhbias;
@@ -268,9 +268,9 @@ for iter = model.iter+1:param_iter,
     if ~rem(iter, params.saveInterv),
         if (params.verbose > 3),
             figure(1);
-            for i = 1:16,subplot(4,4,i);imagesc(model.W(:,:,:,i));axis image off;end;colormap gray;drawnow;
-            figure(2);imagesc(batchdata(:,:,1));colormap gray;
-            figure(3);imagesc(recon(:,:,1));colormap gray;
+            for i = 1:16,subplot(4,8,i+16);imagesc(model.W(:,:,:,i));axis image off;end;colormap gray;drawnow;
+            subplot(2,2,1);imagesc(batchdata(:,:,1));colormap gray;axis off;title('data');
+            subplot(2,2,2);imagesc(recon(:,:,1));colormap gray;axis off;title('reconstruction');
             drawnow;
         end
         if output_enabled,
