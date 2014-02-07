@@ -2,40 +2,72 @@
 #include <matrix.h>
 #include <mex.h>
 
-#include <time.h>
+// #include <cutil.h>
 
 #include "include/utils.cuh"
 #include "include/settings.h"
 
-__global__ void convolve(float *aa, float *bb, float *cc, int N, int K0, int K, int n, int m, int nz, int gridOffset) {
-    int i = blockIdx.y, j = blockIdx.x, ni = gridOffset + threadIdx.z, k0 = threadIdx.x, k = threadIdx.y, ii, jj;
-    float res = 0;
+__global__ void convs(float *fa, float *fb, float *fc, int grid_images, int grid_filters, 
+    int H, int W, int Wfilter, int Hres, int Wres, int colors, int filterBlocks) {
     
-    if (ni >= N) return;
+    __shared__ float imgdata[BLOCKSIZE*BLOCKSIZE][IMAGES_PER_GRID];
+    __shared__ float filtdata[BLOCKSIZE*BLOCKSIZE][FILTERS_PER_GRID];
+    __shared__ float res[FILTERS_PER_GRID][IMAGES_PER_GRID];
     
-    for (ii = 0; ii < m; ii++)
-        for (jj = 0; jj < m; jj++)
-            // for (k = 0; k < K; k++)
-                res += aa[ni + N * k0 + N * K0 * ((i + ii) * n + j + jj)] * bb[k0 + K0 * k + K0 * K * (ii * m + jj)];
+    int tx = threadIdx.x, ty = threadIdx.y, bx = blockIdx.x, by = blockIdx.y, bz = blockIdx.z;
+    int resy = bx / filterBlocks, resx = by / filterBlocks;
+    int imy = (resy) + tx, imx = (resx) + ty;
+    int fty = (bx % filterBlocks) * BLOCKSIZE + tx, ftx = (by % filterBlocks) * BLOCKSIZE + ty;
+    int colorbase = bz * COLORS_PER_BLOCK;
+    
+    if (tx < FILTERS_PER_GRID && ty < IMAGES_PER_GRID)
+        res[tx][ty] = 0;
+    
+    /*
+     *  Load data into shared memory
+     */
+    for (int c = colorbase; c < colors; c++) {
+        for (int im = 0; im < grid_images; im++) {
+            if (imy < H && imx < W)
+                imgdata[ty + BLOCKSIZE * tx][im] = 
+                    fa[imy + H * imx + W * H * c + W * H * colors * im];
+            else 
+                imgdata[ty + BLOCKSIZE * tx][im] = 0;
+        }
+        
+        for (int ft = 0; ft < grid_filters; ft++) {
+            if (fty < Wfilter && ftx < Wfilter)
+                filtdata[ty + BLOCKSIZE * tx][ft] = 
+                    fb[fty + Wfilter * ftx + Wfilter * Wfilter * c + Wfilter * Wfilter * colors * ft];
+            else 
+                filtdata[ty + BLOCKSIZE * tx][ft] = 0;
+        }
+        
+        __syncthreads();
+        
+        if (tx < FILTERS_PER_GRID && ty < IMAGES_PER_GRID)
+            for (int t = 0; t < BLOCKSIZE*BLOCKSIZE; t++)
+                res[tx][ty] += filtdata[t][tx] * imgdata[t][ty];
                 
-    cc[ni + N * k0 + N * K0 * k + N * K0 * K * (i * nz + j)] = res;
+        __syncthreads();
+    }
+    
+    if (tx < FILTERS_PER_GRID && ty < IMAGES_PER_GRID)
+        fc[resy + Hres * resx + Wres * Hres * tx + FILTERS_PER_GRID * Wres * Hres * ty] += res[tx][ty];
 }
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
+    float *fa, *fb, *fc, *da, *db, *dc;
+    dim3 blocks, threads;
+    
     const mxArray *a, *b;
     mxArray *c;
     const mwSize *dimsa, *dimsb;
-    int ndima, ndimb;
     mwSize *dimsc;
     double *aa, *bb, *cc;
-    float *fa, *fb, *fc, *da, *db, *dc;
-    int n, m, i, nz, K, K0, N;
-    dim3 blocks, threads;
-    int grids, nPerGrid;
-    cudaStream_t stream[2];
-    
-    //long t0 = clock(), t1, t2, t3;
+    int H, W, ndima, ndimb, colors, Nfilters, N, Wfilter, Wres, Hres, SIZE_IMAGE, SIZE_FILTER;
+    int imggrids, filtgrids;
 
     a = prhs[0];
     b = prhs[1];
@@ -46,21 +78,28 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     ndima = mxGetNumberOfDimensions(a);
     ndimb = mxGetNumberOfDimensions(b);
     
-    N = dimsa[0]; K0 = dimsa[1]; K = dimsb[1];
+    H = dimsa[0]; W = dimsa[1];
+    if (ndima <= 2) colors = 1;
+    else colors = dimsa[2];
+    if (ndima <= 3) N = 1;
+    else N = dimsa[3];
     
-    if (ndima <= 2) 
-        n = 1;
-    else
-        n = dimsa[2];
-    if (ndimb <= 2)
-        m = 1;
-    else
-        m = dimsb[2];
-    nz = n - m + 1;
-    dimsc = (mwSize*)mxMalloc(sizeof(mwSize)*5);
-    dimsc[0] = N; dimsc[1] = K0; dimsc[2] = K; dimsc[3] = nz; dimsc[4] = nz;
-    c = plhs[0] = mxCreateNumericArray(5, dimsc, mxDOUBLE_CLASS, mxREAL);
+    Wfilter = dimsb[0];
+    if (ndimb <= 3) Nfilters = 1;
+    else Nfilters = dimsb[3];
+    
+    Wres = W - Wfilter + 1;
+    Hres = H - Wfilter + 1;
+   
+    dimsc = (mwSize*)mxMalloc(sizeof(mwSize)*4);
+    dimsc[0] = Hres; dimsc[1] = Wres; dimsc[2] = Nfilters; dimsc[3] = N;
+    c = plhs[0] = mxCreateNumericArray(4, dimsc, mxDOUBLE_CLASS, mxREAL);
     mxFree(dimsc);
+    
+    SIZE_IMAGE = H * W * colors;
+    SIZE_FILTER = Wfilter * Wfilter * colors;
+    
+    //long t0 = clock(), t1, t2, t3;
     
     aa = mxGetPr(a);
     bb = mxGetPr(b);
@@ -69,55 +108,52 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     cudaSetDevice(DEVICE);
     cudaSetDeviceFlags(cudaDeviceMapHost);
     
-    cudaMallocHost(&fa, sizeof(float) * N * K0 * n * n);
-    cudaMallocHost(&fb, sizeof(float) * K0 * K * m * m);
-    cudaMallocHost(&fc, sizeof(float) * N * K0 * K * nz * nz);
+    cudaMallocHost(&fa, sizeof(float) * SIZE_IMAGE * IMAGES_PER_GRID);
+    cudaMallocHost(&fb, sizeof(float) * SIZE_FILTER * FILTERS_PER_GRID);
+    cudaMallocHost(&fc, sizeof(float) * Hres * Wres * FILTERS_PER_GRID * IMAGES_PER_GRID);
     
-    for (i = 0; i < N * K0 * n * n; i++) fa[i] = (float)aa[i];
-    for (i = 0; i < K0 * K * m * m; i++) fb[i] = (float)bb[i];
-    for (i = 0; i < N * K0 * K * nz * nz; i++) fc[i] = i;
+    cudaMalloc(&da, sizeof(float) * SIZE_IMAGE * IMAGES_PER_GRID);
+    cudaMalloc(&db, sizeof(float) * SIZE_FILTER * FILTERS_PER_GRID);
+    cudaMalloc(&dc, sizeof(float) * Hres * Wres * FILTERS_PER_GRID * IMAGES_PER_GRID);
     
-    nPerGrid = min(BLOCKSIZE / K0 / K, MAXBLOCKD3);
-    grids = (N - 1) / nPerGrid + 1;
-    blocks = dim3(nz, nz, 1);
+    imggrids = (N - 1) / IMAGES_PER_GRID + 1; filtgrids = (Nfilters - 1) / FILTERS_PER_GRID + 1;
     
-    cudaMalloc(&db, sizeof(float) * K0 * K * m * m);
-    
-    cudaMemcpy(db, fb, sizeof(float) * K0 * K * m * m, cudaMemcpyHostToDevice);
-    //t1 = clock();
-    
-    if (grids > 1) {
-        cudaStreamCreate(&stream[0]);
-        cudaStreamCreate(&stream[1]);
-    
-        threads = dim3(K0, K, nPerGrid);
-        cudaMalloc(&da, sizeof(float) * nPerGrid * K0 * n * n * 2);
-        cudaMalloc(&dc, sizeof(float) * nPerGrid * K0 * K * nz * nz * 2);
-        cudaMemcpy(da, fa, sizeof(float) * nPerGrid * K0 * n * n, cudaMemcpyHostToDevice);
+    for (int ig = 0; ig < imggrids; ig++) {
+        int grid_images = min(IMAGES_PER_GRID, N - ig * IMAGES_PER_GRID);
+        for (int imgidx = 0; imgidx < grid_images; imgidx++)
+            for (int t = 0; t < SIZE_IMAGE; t++)
+                fa[t + SIZE_IMAGE * imgidx] = (float)aa[t + SIZE_IMAGE * (imgidx + ig * IMAGES_PER_GRID)];
+                
+        cudaMemcpy(da, fa, sizeof(float) * SIZE_IMAGE * grid_images, cudaMemcpyHostToDevice);
         
-        for (i = 0; i < grids; i++) {
-            int stm_cur = i % 2, stm_next = 1 - i % 2;
-            convolve<<<blocks, threads, 0, stream[stm_cur]>>>(da, db, dc, N - (i - stm_cur) * nPerGrid, K0, K, n, m, nz, stm_cur * nPerGrid);
-            if (i < grids - 1)
-                cudaMemcpyAsync(da + stm_next * nPerGrid * K0 * n * n, fa + (i + 1) * nPerGrid * K0 * n * n, sizeof(float) * nPerGrid * K0 * n * n, cudaMemcpyHostToDevice, stream[stm_next]);
+        for (int fg = 0; fg < filtgrids; fg++) {
+            int grid_filters = min(FILTERS_PER_GRID, Nfilters - fg * FILTERS_PER_GRID);
+            memset(fb, 0, sizeof(float) * SIZE_FILTER * FILTERS_PER_GRID);
             
-            cudaMemcpyAsync(fc + i * nPerGrid * K0 * K * nz * nz, dc + stm_cur * nPerGrid * K0 * K * nz * nz, sizeof(float) * nPerGrid * K0 * K * nz * nz, cudaMemcpyDeviceToHost, stream[stm_cur]);
-            cudaDeviceSynchronize();
+            for (int filtidx = 0; filtidx < grid_filters; filtidx++)
+                for (int t = 0; t < SIZE_FILTER; t++)
+                    fb[t + SIZE_FILTER * filtidx] = (float)bb[t + SIZE_FILTER * (filtidx + fg * FILTERS_PER_GRID)];
+                    
+            cudaMemcpy(db, fb, sizeof(float) * SIZE_FILTER * grid_filters, cudaMemcpyHostToDevice);
+            
+            memset(fc, 0, sizeof(float) * Hres * Wres * FILTERS_PER_GRID * IMAGES_PER_GRID);
+            cudaMemcpy(dc, fc, sizeof(float) * Hres * Wres * FILTERS_PER_GRID * IMAGES_PER_GRID, cudaMemcpyHostToDevice);
+            
+            int filterBlocks = ((Wfilter - 1) / BLOCKSIZE + 1);
+            blocks = dim3(Hres * filterBlocks, Wres * filterBlocks, (colors - 1) / COLORS_PER_BLOCK + 1);
+            threads = dim3(BLOCKSIZE, BLOCKSIZE, 1);
+                
+            convs<<<blocks, threads>>>(da, db, dc, grid_images, grid_filters, H, W, Wfilter, Hres, Wres, colors, filterBlocks);
+            
+            cudaMemcpy(fc, dc, sizeof(float) * Hres * Wres * IMAGES_PER_GRID * FILTERS_PER_GRID, cudaMemcpyDeviceToHost);
+
+            for (int imgidx = 0; imgidx < grid_images; imgidx++)
+                for (int filtidx = 0; filtidx < grid_filters; filtidx++)
+                    for (int xx = 0; xx < Wres; xx++)
+                        for (int yy = 0; yy < Hres; yy++)
+                            cc[yy + Hres * xx + Wres * Hres * (filtidx + fg * FILTERS_PER_GRID) + Nfilters * Wres * Hres * (imgidx + ig * IMAGES_PER_GRID)] = (double)fc[yy + Hres * xx + Wres * Hres * filtidx + FILTERS_PER_GRID * Wres * Hres * imgidx];
         }
-    } else {
-        threads = dim3(K0, K, N);
-        cudaMalloc(&da, sizeof(float) * N * K0 * n * n);
-        cudaMalloc(&dc, sizeof(float) * N * K0 * K * nz * nz);
-        cudaMemcpy(da, fa, sizeof(float) * N * K0 * n * n, cudaMemcpyHostToDevice);
-        
-        convolve<<<blocks, threads>>>(da, db, dc, N, K0, K, n, m, nz, 0);
-        cudaMemcpy(fc, dc, sizeof(float) * N * K0 * K * nz * nz, cudaMemcpyDeviceToHost);
     }
-    
-    //t2 = clock();
-    
-    for (i = 0; i < N * K0 * K * nz * nz; i++)
-        cc[i] = (double)fc[i];
         
     cudaFreeHost(fa);
     cudaFreeHost(fb);
@@ -125,16 +161,4 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     cudaFree(da);
     cudaFree(db);
     cudaFree(dc);
-    //t3 = clock();
-    
-    //printf("initialize:%d\nkernel:%d\nfinalize:%d\n", t1-t0, t2-t1, t3-t2);
-    
-    // for (i = 0; i < nz; i++)
-        // for (j = 0; j < nz; j++)
-            // for (ii = 0; ii < m; ii++)
-                // for (jj = 0; jj < m; jj++)
-                    // for (k = 0; k < K; k++) 
-                        // for (k0 = 0; k0 < K0; k0++)
-                            // for (ni = 0; ni < N; ni++)
-                                // cc[ni + N * k0 + N * K0 * k + N * K0 * K * (i * nz + j)] += aa[ni + N * k0 + N * K0 * ((i + ii) * n + j + jj )] * bb[k0 + K0 * k + K0 * K * (ii * m + jj)];
 }

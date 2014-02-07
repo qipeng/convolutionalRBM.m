@@ -2,7 +2,6 @@ function compWhitMatrix(input, w)
 
 samples = 100000;
 
-load data;
 N = size(input,4);
 W = size(input,2);
 H = size(input,1);

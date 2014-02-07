@@ -1,5 +1,10 @@
 function make(option)
 
+if (strcmpi(computer,'maci64')),
+    setenv('PATH',[getenv('PATH'), ':', '/usr/local/cuda/bin']);
+    setenv('DYLD_LIBRARY_PATH',['/usr/local/cuda/lib', ':', getenv('DYLD_LIBRARY_PATH')]);
+end
+
 if ~exist('option','var') || isempty(option),
     option = -1;
 end
@@ -55,8 +60,12 @@ if compileCuda,
 
     for i = 1:length(mxlist),
         fprintf('(%d/%d) Compiling mex/%s...\n', i, length(mxlist), mxlist(i).name);
+        optionfile = 'nvmexopts.bat';
+        if (strcmpi(computer, 'maci64')),
+            optionfile = 'nvmexopts_maci64.sh';
+        end
         try
-            nvmex(sprintf('mex/%s', mxlist(i).name), '-f', 'nvmexopts.bat');
+            nvmex(sprintf('mex/%s', mxlist(i).name), '-f', optionfile);
         catch exp,
             fprintf('[Error] Error compiling mex/%s, please refer to the error information for solution.\n', mxlist(i).name);
         end

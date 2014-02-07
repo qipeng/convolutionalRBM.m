@@ -16,8 +16,9 @@ function res = whiten_data(input, whM, useCuda)
         fprintf('%5d/%5d...',i,N);
         
         padded = zeros(H+w-1, W+w-1, colors);
+        mu = mean(mean(input(:,:,:,i),1),2);
         
-        padded(halfw:H+halfw-1, halfw:W+halfw-1, :) = input(:,:,:,i);
+        padded(halfw:H+halfw-1, halfw:W+halfw-1, :) = bsxfun(@minus,input(:,:,:,i),mu);
         temp = convs(padded, whMtemp, useCuda);
         padded = conve(temp, exKernel, useCuda);
         

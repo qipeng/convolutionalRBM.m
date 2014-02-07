@@ -1,3 +1,6 @@
 #define DEVICE 0
-#define BLOCKSIZE 256
-#define MAXBLOCKD3 32
+#define BLOCKSIZE 16
+#define IMAGES_PER_GRID 2
+#define FILTERS_PER_GRID 8
+#define COLORS_PER_BLOCK 4
+#define MAXBLOCKD3 16

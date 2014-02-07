@@ -18,10 +18,12 @@ rem ********************************************************************
 rem General parameters
 rem ********************************************************************
 
-set MATLAB=T:\Study\Computation\MATLAB
+set MATLAB=C:\Program Files\MATLAB\R2013a\
 set VS80COMNTOOLS=%VS80COMNTOOLS%
-set VSINSTALLDIR=T:\Develop\IDE\Visual Studio 2010
+set VSINSTALLDIR=C:\Program Files (x86)\Microsoft Visual Studio 10.0
 set VCINSTALLDIR=%VSINSTALLDIR%\VC
+set CUDA_INC_PATH=C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v5.5\include
+set CUDA_LIB_PATH=C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v5.5\lib\x64
 set PATH=%VCINSTALLDIR%\BIN\;%VCINSTALLDIR%\PlatformSDK\bin;%VSINSTALLDIR%\Common7\IDE;%VSINSTALLDIR%\SDK\v2.0\bin;%VSINSTALLDIR%\Common7\Tools;%VSINSTALLDIR%\Common7\Tools\bin;%VCINSTALLDIR%\VCPackages;%MATLAB_BIN%;C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\Bin;%PATH%
 set INCLUDE=%VCINSTALLDIR%\ATLMFC\INCLUDE;%VCINSTALLDIR%\INCLUDE;%VCINSTALLDIR%\PlatformSDK\INCLUDE;%VSINSTALLDIR%\SDK\v2.0\include;%MATLAB%\extern\include;%NVSDKDIR%\C\common\inc;%CUDA_INC_PATH%;%INCLUDE%
 set LIB=C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\Lib\x64\;%VCINSTALLDIR%\ATLMFC\LIB;%VCINSTALLDIR%\LIB\amd64;%VCINSTALLDIR%\PlatformSDK\lib;%VSINSTALLDIR%\SDK\v2.0\lib;%MATLAB%\extern\lib\win64;%NVSDKDIR%\C\common\lib\x64;%CUDA_LIB_PATH%;%LIB%
@@ -32,7 +34,7 @@ rem Compiler parameters
 rem ********************************************************************
 rem set COMPILER=cl
 set COMPILER=nvcc
-set COMPFLAGS= -c -arch compute_11 -Xcompiler "/c /Zp8 /GR /W3 /EHs /D_CRT_SECURE_NO_DEPRECATE /D_SCL_SECURE_NO_DEPRECATE /D_SECURE_SCL=0 /DMATLAB_MEX_FILE /nologo /MD"
+set COMPFLAGS= -c -arch compute_20 -Xcompiler "/c /Zp8 /GR /W0 /EHs /D_CRT_SECURE_NO_DEPRECATE /D_SCL_SECURE_NO_DEPRECATE /D_SECURE_SCL=0 /DMATLAB_MEX_FILE /nologo /MD"
 set OPTIMFLAGS=-Xcompiler "/O2 /Oy- /DNDEBUG"
 set DEBUGFLAGS=-Xcompiler "/Zi /Fd"%OUTDIR%%MEX_NAME%%MEX_EXT%.pdb""
 set NAME_OBJECT= 
@@ -60,4 +62,4 @@ set RC_LINKER=
 set POSTLINK_CMDS=del "%OUTDIR%%MEX_NAME%.map"
 set POSTLINK_CMDS1=del %LIB_NAME%.x
 set POSTLINK_CMDS2=mt -outputresource:"%OUTDIR%%MEX_NAME%%MEX_EXT%";2 -manifest "%OUTDIR%%MEX_NAME%%MEX_EXT%.manifest"
-set POSTLINK_CMDS3=del "%OUTDIR%%MEX_NAME%%MEX_EXT%.manifest" 
+rem set POSTLINK_CMDS3=del "%OUTDIR%%MEX_NAME%%MEX_EXT%.manifest" 

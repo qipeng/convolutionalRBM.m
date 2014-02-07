@@ -9,10 +9,12 @@ function [model, output] = trainCRBM(data, params, oldModel)
 %                   of CRBM. This matrix is 4-D the first three dimensions
 %                   define an image (coloum-stored with a color channel),
 %                   and the last dimension indexes through the batch of
-%                   images
+%                   images. I.e. the four dimensions are: height, width,
+%                   channels (1 for grayscale, 3 for RGB), and number of
+%                   images.
 %
 %   Written by: Peng Qi, Sep 27, 2012
-%   Last Updated: Jul 22, 2013
+%   Last Updated: Feb 8, 2014
 %   Version: 0.3 alpha
 
 if params.verbose > 0,
@@ -54,7 +56,7 @@ output_enabled = nargout > 1;
 hinit = 0;
 
 if params.sparseness > 0,
-    hinit = 0;
+    hinit = -.1;
 end
 
 if exist('oldModel','var') && ~isempty(oldModel),
@@ -151,14 +153,14 @@ for iter = model.iter+1:param_iter,
         batchdata = data.x(:,:,:,batch_idx((batch - 1) * param_szBatch + 1 : ...
             batch * param_szBatch));
         if method == 2,
-            phantomdata = phantom(:,:,:,batch_idx((batch - 1) * param_szBatch + 1 : ...
+            phantomdata = phantom(:,:,:,((batch - 1) * param_szBatch + 1 : ...
                 batch * param_szBatch));
         end
         recon = batchdata;
         
         %% positive phase
 
-        %% mean field hidden update
+        %% hidden update
         
         model_W = model.W;
         model_hbias = model.hbias;
@@ -173,7 +175,8 @@ for iter = model.iter+1:param_iter,
         end
         
         if output_enabled && ~rem(iter, params.saveInterv),
-            output.x((batch - 1) * param_szBatch + 1:batch * param_szBatch,:,:,:) = output_x;
+            output.x(:,:,:,batch_idx((batch - 1) * param_szBatch + 1 : ...
+            batch * param_szBatch)) = output_x;
         end
         
         %% negative phase
@@ -202,6 +205,7 @@ for iter = model.iter+1:param_iter,
             err = batchdata - recon;
             errsum = errsum + sum(err(:).^2);
             if (params.verbose > 4),
+                %% visualize data, reconstruction, and filters (still experimental)
                 figure(1);
                 for i = 1:16,subplot(4,8,i+16);imagesc(model.W(:,:,:,i));axis image off;end;colormap gray;drawnow;
                 subplot(2,2,1);imagesc(batchdata(:,:,1));colormap gray;axis off;title('data');
@@ -213,7 +217,6 @@ for iter = model.iter+1:param_iter,
         %% contrast divergence update on params
         
         if (params.sparseness > 0),
-%             hidact = hidact + reshape(sum(sum(sum(sigmoid(bsxfun(@plus, poshidacts, model_hbias)), 4), 3), 1), [1 Nfilters]);
             hidact = hidact + reshape(sum(sum(sum(pospoolprobs, 4), 2), 1), [1 Nfilters]);
         else
             dhbias = phbias * dhbias + ...
@@ -234,6 +237,7 @@ for iter = model.iter+1:param_iter,
         end
         model.W = model.W + params.epsW * (dW  - params.decayw * model.W);
         
+        %% experimental code for saving debugging info for mex implementations
 %         save dbgInfo model poshidacts poshidprobs poshidstates recon neghidacts neghidprobs model_W
 %         if any(isnan(model.W(:))) || any(isnan(poshidacts(:))) || any(isnan(poshidprobs(:))) || any(isnan(poshidstates(:))) ...
 %                 || any(isnan(recon(:))) || any(isnan(neghidacts(:))) || any(isnan(neghidprobs(:))),
@@ -261,7 +265,7 @@ for iter = model.iter+1:param_iter,
             fprintf('\n\tsparseness: %f\thidbias: %f\n', sum(hidact) / Nfilters, sum(model.hbias) / Nfilters);
         end
         if (model.sigma > 0.01),
-            model.sigma = model.sigma * 0.99;
+            model.sigma = model.sigma * 0.95;
         end
     end
     
@@ -287,8 +291,6 @@ for iter = model.iter+1:param_iter,
             end
         end
     end
-    
-%     for i = 1:20,subplot(4,5,i);imagesc(reshape(whiten_data(model.W(1,i,:,:), uwhM),m,m));axis image off;end;colormap gray;drawnow;pause(0.1);
-    
+
 end
 end

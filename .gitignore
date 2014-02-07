@@ -1,4 +1,4 @@
-nvmexopt*.bat
+#nvmexopt*.bat
 *.ignore
 *.mex*
 *.asv
@@ -7,3 +7,5 @@ nvmexopt*.bat
 Caltech101MAT/*
 image_preprocess.m
 *.log
+*.DS_Store
+*.dylib

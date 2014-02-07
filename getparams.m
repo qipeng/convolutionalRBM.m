@@ -1,7 +1,7 @@
 function params = getparams(method)
 % GETPARAMS  Get default params for trainCRBM
 %
-%   See also TRAINRBM
+%   See also TRAINCRBM
 %
 %   Written by: Peng Qi, Sep 27, 2012
 
