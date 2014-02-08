@@ -16,17 +16,16 @@ __global__ void convs(float *fa, float *fb, float *fc, int grid_images, int grid
     
     int tx = threadIdx.x, ty = threadIdx.y, bx = blockIdx.x, by = blockIdx.y, bz = blockIdx.z;
     int resy = bx / filterBlocks, resx = by / filterBlocks;
-    int imy = (resy) + tx, imx = (resx) + ty;
-    int fty = (bx % filterBlocks) * BLOCKSIZE + tx, ftx = (by % filterBlocks) * BLOCKSIZE + ty;
+    int offsetx = (bx % filterBlocks) * BLOCKSIZE, offsety = (by % filterBlocks) * BLOCKSIZE;
+    int imy = (resx + offsetx) + tx, imx = (resy + offsety) + ty;
+    int fty = offsetx + tx, ftx = offsety + ty;
     int colorbase = bz * COLORS_PER_BLOCK;
     
     if (tx < FILTERS_PER_GRID && ty < IMAGES_PER_GRID)
         res[tx][ty] = 0;
     
-    /*
-     *  Load data into shared memory
-     */
     for (int c = colorbase; c < colors; c++) {
+        // Load data into shared memory
         for (int im = 0; im < grid_images; im++) {
             if (imy < H && imx < W)
                 imgdata[ty + BLOCKSIZE * tx][im] = 
@@ -45,6 +44,7 @@ __global__ void convs(float *fa, float *fb, float *fc, int grid_images, int grid
         
         __syncthreads();
         
+        // Compute convolution
         if (tx < FILTERS_PER_GRID && ty < IMAGES_PER_GRID)
             for (int t = 0; t < BLOCKSIZE*BLOCKSIZE; t++)
                 res[tx][ty] += filtdata[t][tx] * imgdata[t][ty];
@@ -53,7 +53,7 @@ __global__ void convs(float *fa, float *fb, float *fc, int grid_images, int grid
     }
     
     if (tx < FILTERS_PER_GRID && ty < IMAGES_PER_GRID)
-        fc[resy + Hres * resx + Wres * Hres * tx + FILTERS_PER_GRID * Wres * Hres * ty] += res[tx][ty];
+        atomicAdd(&fc[resy + Hres * resx + Wres * Hres * tx + FILTERS_PER_GRID * Wres * Hres * ty], res[tx][ty]);
 }
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
@@ -99,8 +99,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     SIZE_IMAGE = H * W * colors;
     SIZE_FILTER = Wfilter * Wfilter * colors;
     
-    //long t0 = clock(), t1, t2, t3;
-    
     aa = mxGetPr(a);
     bb = mxGetPr(b);
     cc = mxGetPr(c);
@@ -108,50 +106,50 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     cudaSetDevice(DEVICE);
     cudaSetDeviceFlags(cudaDeviceMapHost);
     
-    cudaMallocHost(&fa, sizeof(float) * SIZE_IMAGE * IMAGES_PER_GRID);
-    cudaMallocHost(&fb, sizeof(float) * SIZE_FILTER * FILTERS_PER_GRID);
-    cudaMallocHost(&fc, sizeof(float) * Hres * Wres * FILTERS_PER_GRID * IMAGES_PER_GRID);
+    CUDA_SAFE_CALL(cudaMallocHost(&fa, sizeof(float) * SIZE_IMAGE * IMAGES_PER_GRID));
+    CUDA_SAFE_CALL(cudaMallocHost(&fb, sizeof(float) * SIZE_FILTER * FILTERS_PER_GRID));
+    CUDA_SAFE_CALL(cudaMallocHost(&fc, sizeof(float) * Hres * Wres * FILTERS_PER_GRID * IMAGES_PER_GRID));
     
-    cudaMalloc(&da, sizeof(float) * SIZE_IMAGE * IMAGES_PER_GRID);
-    cudaMalloc(&db, sizeof(float) * SIZE_FILTER * FILTERS_PER_GRID);
-    cudaMalloc(&dc, sizeof(float) * Hres * Wres * FILTERS_PER_GRID * IMAGES_PER_GRID);
-    
+    CUDA_SAFE_CALL(cudaMalloc(&da, sizeof(float) * SIZE_IMAGE * IMAGES_PER_GRID));
+    CUDA_SAFE_CALL(cudaMalloc(&db, sizeof(float) * SIZE_FILTER * FILTERS_PER_GRID));
+    CUDA_SAFE_CALL(cudaMalloc(&dc, sizeof(float) * Hres * Wres * FILTERS_PER_GRID * IMAGES_PER_GRID));
     imggrids = (N - 1) / IMAGES_PER_GRID + 1; filtgrids = (Nfilters - 1) / FILTERS_PER_GRID + 1;
     
     for (int ig = 0; ig < imggrids; ig++) {
         int grid_images = min(IMAGES_PER_GRID, N - ig * IMAGES_PER_GRID);
         for (int imgidx = 0; imgidx < grid_images; imgidx++)
-            for (int t = 0; t < SIZE_IMAGE; t++)
+            for (int t = 0; t < SIZE_IMAGE; t++) {
                 fa[t + SIZE_IMAGE * imgidx] = (float)aa[t + SIZE_IMAGE * (imgidx + ig * IMAGES_PER_GRID)];
-                
-        cudaMemcpy(da, fa, sizeof(float) * SIZE_IMAGE * grid_images, cudaMemcpyHostToDevice);
-        
-        for (int fg = 0; fg < filtgrids; fg++) {
-            int grid_filters = min(FILTERS_PER_GRID, Nfilters - fg * FILTERS_PER_GRID);
-            memset(fb, 0, sizeof(float) * SIZE_FILTER * FILTERS_PER_GRID);
-            
-            for (int filtidx = 0; filtidx < grid_filters; filtidx++)
-                for (int t = 0; t < SIZE_FILTER; t++)
-                    fb[t + SIZE_FILTER * filtidx] = (float)bb[t + SIZE_FILTER * (filtidx + fg * FILTERS_PER_GRID)];
-                    
-            cudaMemcpy(db, fb, sizeof(float) * SIZE_FILTER * grid_filters, cudaMemcpyHostToDevice);
-            
-            memset(fc, 0, sizeof(float) * Hres * Wres * FILTERS_PER_GRID * IMAGES_PER_GRID);
-            cudaMemcpy(dc, fc, sizeof(float) * Hres * Wres * FILTERS_PER_GRID * IMAGES_PER_GRID, cudaMemcpyHostToDevice);
-            
-            int filterBlocks = ((Wfilter - 1) / BLOCKSIZE + 1);
-            blocks = dim3(Hres * filterBlocks, Wres * filterBlocks, (colors - 1) / COLORS_PER_BLOCK + 1);
-            threads = dim3(BLOCKSIZE, BLOCKSIZE, 1);
-                
-            convs<<<blocks, threads>>>(da, db, dc, grid_images, grid_filters, H, W, Wfilter, Hres, Wres, colors, filterBlocks);
-            
-            cudaMemcpy(fc, dc, sizeof(float) * Hres * Wres * IMAGES_PER_GRID * FILTERS_PER_GRID, cudaMemcpyDeviceToHost);
+            }
+        CUDA_SAFE_CALL(cudaMemcpy(da, fa, sizeof(float) * SIZE_IMAGE * grid_images, cudaMemcpyHostToDevice));
 
-            for (int imgidx = 0; imgidx < grid_images; imgidx++)
-                for (int filtidx = 0; filtidx < grid_filters; filtidx++)
-                    for (int xx = 0; xx < Wres; xx++)
-                        for (int yy = 0; yy < Hres; yy++)
-                            cc[yy + Hres * xx + Wres * Hres * (filtidx + fg * FILTERS_PER_GRID) + Nfilters * Wres * Hres * (imgidx + ig * IMAGES_PER_GRID)] = (double)fc[yy + Hres * xx + Wres * Hres * filtidx + FILTERS_PER_GRID * Wres * Hres * imgidx];
+        for (int fg = 0; fg < filtgrids; fg++) {
+            int filter_div = (Wfilter + BLOCKSIZE - 1) / Wfilter;
+            int grid_filters = min(FILTERS_PER_GRID, Nfilters - fg * FILTERS_PER_GRID);
+            for (int fx = 0; fx < filter_div; fx++)
+                for (int fy = 0; fy < filter_div; fy++) {    
+                    memset(fb, 0, sizeof(float) * SIZE_FILTER * FILTERS_PER_GRID);
+                    for (int filtidx = 0; filtidx < grid_filters; filtidx++)
+                        for (int t = 0; t < SIZE_FILTER; t++)
+                            fb[t + SIZE_FILTER * filtidx] = (float)bb[t + SIZE_FILTER * (filtidx + fg * FILTERS_PER_GRID)];
+                            
+                    CUDA_SAFE_CALL(cudaMemcpy(db, fb, sizeof(float) * SIZE_FILTER * grid_filters, cudaMemcpyHostToDevice));
+                    memset(fc, 0, sizeof(float) * Hres * Wres * FILTERS_PER_GRID * IMAGES_PER_GRID);
+                    CUDA_SAFE_CALL(cudaMemcpy(dc, fc, sizeof(float) * Hres * Wres * FILTERS_PER_GRID * IMAGES_PER_GRID, cudaMemcpyHostToDevice));
+                    int filterBlocks = ((Wfilter - 1) / BLOCKSIZE + 1);
+                    blocks = dim3(Hres * filterBlocks, Wres * filterBlocks, (colors - 1) / COLORS_PER_BLOCK + 1);
+                    threads = dim3(BLOCKSIZE, BLOCKSIZE, 1);
+
+                    convs<<<blocks, threads>>>(da, db, dc, grid_images, grid_filters, H, W, Wfilter, Hres, Wres, colors, filterBlocks);
+
+                    CUDA_SAFE_CALL(cudaMemcpy(fc, dc, sizeof(float) * Hres * Wres * IMAGES_PER_GRID * FILTERS_PER_GRID, cudaMemcpyDeviceToHost));
+
+                    for (int imgidx = 0; imgidx < grid_images; imgidx++)
+                        for (int filtidx = 0; filtidx < grid_filters; filtidx++)
+                            for (int xx = 0; xx < Wres; xx++)
+                                for (int yy = 0; yy < Hres; yy++)
+                                    cc[yy + Hres * xx + Wres * Hres * (filtidx + fg * FILTERS_PER_GRID) + Nfilters * Wres * Hres * (imgidx + ig * IMAGES_PER_GRID)] = (double)fc[yy + Hres * xx + Wres * Hres * filtidx + FILTERS_PER_GRID * Wres * Hres * imgidx];     
+                }
         }
     }
         
