@@ -2,11 +2,9 @@ function compWhitMatrix(input, w)
 
 samples = 100000;
 
-N = size(input,4);
-W = size(input,2);
-H = size(input,1);
+[H, W, C, N] = size(input);
 
-X = zeros(samples, w*w);
+X = zeros(samples, w*w*C);
 for i = 1:samples,
     im = randi(N);
     x = randi(W-w+1)-1; y = randi(H-w+1)-1;
