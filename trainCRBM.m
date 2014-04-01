@@ -56,7 +56,7 @@ output_enabled = nargout > 1;
 hinit = 0;
 
 if params.sparseness > 0,
-    hinit = -.1;
+    hinit = -.2;
 end
 
 if exist('oldModel','var') && ~isempty(oldModel),
@@ -98,7 +98,7 @@ if output_enabled,
     output.x = zeros(Hpool, Wpool, Nfilters, N);
 end
 
-total_batches = floor(N / param_szBatch);
+total_batches = ceil(N / param_szBatch);
 
 if params.verbose > 0,
     fprintf('Completed.\n');
@@ -151,10 +151,10 @@ for iter = model.iter+1:param_iter,
     
     for batch = 1:total_batches,
         batchdata = data.x(:,:,:,batch_idx((batch - 1) * param_szBatch + 1 : ...
-            batch * param_szBatch));
+            min(batch * param_szBatch, N)));
         if method == 2,
             phantomdata = phantom(:,:,:,((batch - 1) * param_szBatch + 1 : ...
-                batch * param_szBatch));
+                min(batch * param_szBatch, N)));
         end
         recon = batchdata;
         
@@ -184,7 +184,7 @@ for iter = model.iter+1:param_iter,
         %% reconstruct data from hidden variables
 
         if method == 1,
-            recon = conve(poshidstates, model_W, useCuda);
+            recon = conve(poshidprobs, model_W, useCuda);
         elseif method == 2,
             recon = phantomdata;
         end
@@ -208,7 +208,7 @@ for iter = model.iter+1:param_iter,
                 %% visualize data, reconstruction, and filters (still experimental)
                 figure(1);
                 for i = 1:16,subplot(4,8,i+16);imagesc(model.W(:,:,:,i));axis image off;end;colormap gray;drawnow;
-                subplot(2,2,1);imagesc(batchdata(:,:,1));colormap gray;axis off;title('data');
+                subplot(2,2,1);imagesc(batchdata(:,:,1));colormap gray;axis off;title('data (ZCA''d)');
                 subplot(2,2,2);imagesc(recon(:,:,1));colormap gray;axis off;title('reconstruction');
                 drawnow;
             end
@@ -265,16 +265,17 @@ for iter = model.iter+1:param_iter,
             fprintf('\n\tsparseness: %f\thidbias: %f\n', sum(hidact) / Nfilters, sum(model.hbias) / Nfilters);
         end
         if (model.sigma > 0.01),
-            model.sigma = model.sigma * 0.95;
+            model.sigma = model.sigma * 0.99;
         end
     end
     
     if ~rem(iter, params.saveInterv),
         if (params.verbose > 3),
+            %% visualize data, reconstruction, and filters (still experimental)
             figure(1);
             for i = 1:16,subplot(4,8,i+16);imagesc(model.W(:,:,:,i));axis image off;end;colormap gray;drawnow;
-            subplot(2,2,1);imagesc(batchdata(:,:,1));colormap gray;axis off;title('data');
-            subplot(2,2,2);imagesc(recon(:,:,1));colormap gray;axis off;title('reconstruction');
+            subplot(2,2,1);imagesc(batchdata(:,:,:,1));colormap gray;axis off;title('data (ZCA''d)');
+            subplot(2,2,2);imagesc(recon(:,:,:,1));colormap gray;axis off;title('reconstruction');
             drawnow;
         end
         if output_enabled,
