@@ -14,4 +14,4 @@ end
 
 [~,~,uwhM,whM]=whiten(X);
 
-save(sprintf('whitM_%d',w), 'whM', 'uwhM');
+save(sprintf('whitM_%d_%d',w,C), 'whM', 'uwhM');

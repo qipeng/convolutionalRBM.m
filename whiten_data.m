@@ -3,12 +3,12 @@ function res = whiten_data(input, whM, useCuda)
         useCuda = 0;
     end
     
-    w = sqrt(size(whM, 1));
-    halfw = floor(w/2);
-    
     [H, W, colors, N] = size(input);
     
-    res = zeros([H W 1 N]);
+    w = sqrt(size(whM, 1) / colors);
+    halfw = floor(w/2);
+    
+    res = zeros([H W colors N]);
     whMtemp = reshape(whM', [w, w, colors, w*w*colors]);
     exKernel = reshape(eye(w*w*colors), [w, w, colors, w*w*colors]);
     

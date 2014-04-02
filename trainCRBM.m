@@ -113,11 +113,11 @@ end
 
 if (params.whitenData),
     try
-        load(sprintf('whitM_%d', params.szFilter));
+        load(sprintf('whitM_%d_%d', params.szFilter, size(data.x,3)));
     catch e,
         if (params.verbose > 1), fprintf('\nComputing whitening matrix...');end
         compWhitMatrix(data.x, params.szFilter);
-        load(sprintf('whitM_%d', params.szFilter));
+        load(sprintf('whitM_%d_%d', params.szFilter, size(data.x, 3)));
         if (params.verbose > 1), fprintf('Completed.\n');end
     end
     if (params.verbose > 0), fprintf('Whitening data...'); end
