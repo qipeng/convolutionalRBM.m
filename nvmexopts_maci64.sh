@@ -64,7 +64,7 @@
             ARCHS='x86_64'
             CFLAGS="-ccbin=/usr/bin/clang++ -gencode=arch=compute_13,code=sm_13 -gencode=arch=compute_20,code=sm_20 -gencode=arch=compute_30,code=\\\"sm_30,compute_30\\\" -m 64 -I$TMW_ROOT/toolbox/distcomp/gpu/extern/include -I/usr/include --compiler-options -fno-common,-arch,$ARCHS,-isysroot.$MW_SDKROOT,-mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET,-fexceptions,-std=c++11,-stdlib=libc++"
             CLIBS="$MLIBS -L/usr/local/cuda/lib -lmwgpu -lc++ -install_name '/usr/local/cuda/lib/libcudart.dylib' -lcudart -install_name '/usr/local/cuda/lib/libcurand.dylib' -lcurand"
-            COPTIMFLAGS='-O2 -DNDEBUG'
+            COPTIMFLAGS='-O3 -DNDEBUG'
             CDEBUGFLAGS='-g'
 #
             # C++keyName: nvcc
@@ -76,7 +76,7 @@
             CXX="$NVCC"
             CXXFLAGS="-ccbin=/usr/bin/clang++ -gencode=arch=compute_13,code=sm_13 -gencode=arch=compute_20,code=sm_20 -gencode=arch=compute_30,code=\\\"sm_30,compute_30\\\" -m 64 -I$TMW_ROOT/toolbox/distcomp/gpu/extern/include -I/usr/include --compiler-options -fno-common,-fexceptions,-arch,$ARCHS,-isysroot.$MW_SDKROOT,-mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET,-std=c++11,-stdlib=libc++"
             CXXLIBS="$MLIBS -L/usr/local/cuda/lib -lmwgpu -lc++ -install_name '/usr/local/cuda/lib/libcudart.dylib' -lcudart -install_name '/usr/local/cuda/lib/libcurand.dylib' -lcurand"
-            CXXOPTIMFLAGS='-O2 -DNDEBUG'
+            CXXOPTIMFLAGS='-O3 -DNDEBUG'
             CXXDEBUGFLAGS='-g'
 #
             LD="xcrun  -sdk macosx10.9  clang"
