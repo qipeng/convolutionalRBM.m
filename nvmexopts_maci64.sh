@@ -81,8 +81,8 @@
 #
             LD="xcrun  -sdk macosx10.9  clang"
             LDEXTENSION='.mexmaci64'
-            LDFLAGS="-arch $ARCHS -Wl,-syslibroot,$MW_SDKROOT -mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET"
-            LDFLAGS="$LDFLAGS -bundle -Wl,-exported_symbols_list,$TMW_ROOT/extern/lib/$Arch/$MAPFILE -stdlib=libc++"
+            LDFLAGS="-arch $ARCHS -Wl,-syslibroot,$MW_SDKROOT,-rpath,/usr/local/cuda/lib -mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET"
+            LDFLAGS="$LDFLAGS -bundle -Wl,-exported_symbols_list,$TMW_ROOT/extern/lib/$Arch/$MAPFILE -stdlib=libc++ -L/usr/local/cuda/lib"
             LDOPTIMFLAGS='-O'
             LDDEBUGFLAGS='-g'
 #
