@@ -2,8 +2,6 @@
 #include <matrix.h>
 #include <mex.h>
 
-// #include <cutil.h>
-
 #include "include/utils.cuh"
 #include "include/settings.h"
 
