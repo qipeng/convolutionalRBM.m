@@ -40,8 +40,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     		strideH = strideW;
     }
 
-    Wres = (W - Wfilter + 1)/strideW;
-    Hres = (H - Hfilter + 1)/strideH;
+    Wres = (W - Wfilter)/strideW + 1;
+    Hres = (H - Hfilter)/strideH + 1;
    
     dimsc = (mwSize*)mxMalloc(sizeof(mwSize)*4);
     dimsc[0] = Hres; dimsc[1] = Wres; dimsc[2] = Nfilters; dimsc[3] = N;

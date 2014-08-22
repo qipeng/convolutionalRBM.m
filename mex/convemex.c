@@ -44,7 +44,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             strideH = strideW;
     }
     
-    Wres = W*strideW + Wfilter - 1; Hres = H*strideH + Hfilter - 1;
+    Wres = (W-1)*strideW + Wfilter; Hres = (H-1)*strideH + Hfilter;
     
     dimsc = (mwSize*)mxMalloc(sizeof(mwSize)*4);
     dimsc[0] = Hres; dimsc[1] = Wres; dimsc[2] = colors; dimsc[3] = N;
