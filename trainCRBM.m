@@ -120,9 +120,9 @@ if (params.whitenData),
         load(sprintf('whitM_%d_%d', params.szFilter, size(data.x, 3)));
         if (params.verbose > 1), fprintf('Completed.\n');end
     end
-    if (params.verbose > 0), fprintf('Whitening data...'); end
+    if (params.verbose > 0), fprintf('Whitening data...\n'); end
     data.x = whiten_data(data.x, whM, useCuda);
-    if (params.verbose > 0), fprintf('Completed.\n'); end
+    if (params.verbose > 0), fprintf('Whitening Completed.\n'); end
 end
 
 if method == 2,

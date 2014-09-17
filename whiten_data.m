@@ -22,7 +22,7 @@ function res = whiten_data(input, whM, useCuda)
         temp = convs(padded, whMtemp, useCuda);
         padded = conve(temp, exKernel, useCuda);
         
-        res(:,:,:,i) = padded(halfw:H+halfw-1, halfw:W+halfw-1, :) ./ w;
+        res(:,:,:,i) = padded(halfw:H+halfw-1, halfw:W+halfw-1, :) ./ w^2;
         
         fprintf('done.\n');
     end
